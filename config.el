@@ -1,3 +1,6 @@
+;; For `eat-eshell-mode'.
+(add-hook 'eshell-load-hook #'eat-eshell-mode)
+
 ;; Disable confirmation dialogs
 (setq confirm-kill-emacs nil)
 (setq display-line-numbers-type nil)
@@ -87,10 +90,9 @@
 
 (after! lsp-mode
   ;; Use system elixir-ls (from mise/asdf)
-  (setq lsp-elixir-ls-server-dir nil)  ; Don't use bundled version
-(setq lsp-zig-zls-executable (executable-find "zls"))
-
-  ;; Find elixir-ls in PATH
+;; Don't use bundled version
+  (setq lsp-elixir-ls-server-dir nil)
+;;  Find elixir-ls in PATH
   (when-let ((elixir-ls (executable-find "elixir-ls")))
     (setq lsp-elixir-server-command (list elixir-ls)))
 
@@ -184,3 +186,45 @@ Returns 'codecrafters, 'exercism, or nil."
   (setq nov-text-width 80
         nov-variable-pitch t
         nov-save-place-file (concat doom-cache-dir "nov-places")))
+
+(after! org
+  (setq org-directory "~/org/"
+        org-agenda-files '("~/org/school.org" "~/org/tasks.org")))
+
+(after! org
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "WAIT(w)" "|" "DONE(d)" "KILL(k)"))))
+
+(after! org
+  (setq org-capture-templates
+        '(("a" "Assignment" entry
+           (file+headline "~/org/school.org" "Inbox")
+           "* TODO %^{Assignment}\nDEADLINE: %^{Due}t\n:PROPERTIES:\n:CLASS: %^{Class|CIS311|CIS375|ECON265|MKTG201}\n:END:\n%?"
+           :empty-lines 1)
+
+          ("n" "Class Note" entry
+           (file+headline "~/org/school.org" "Notes")
+           "* %^{Class} - %^{Topic}\n%U\n%?"
+           :empty-lines 1)
+
+          ("q" "Quick Todo" entry
+           (file+headline "~/org/school.org" "Inbox")
+           "* TODO %?\n"))))
+
+(after! org
+  (setq org-agenda-custom-commands
+        '(("s" "School"
+           ((agenda "" ((org-agenda-span 7)
+                        (org-agenda-start-on-weekday 1)))
+            (todo "NEXT")
+            (todo "WAIT"))))))
+
+(after! org-roam
+  ;; Quick find by class
+  (defun my/roam-find-cis311 ()
+    (interactive)
+    (org-roam-node-find nil nil
+                        (lambda (node)
+                          (member "CIS311" (org-roam-node-tags node)))))
+
+  (map! :leader :desc "CIS311 notes" "n r 1" #'my/roam-find-cis311))
